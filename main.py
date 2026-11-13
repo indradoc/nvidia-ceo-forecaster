@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: MIT
 """Quantile forecaster for Polymarket "Next CEO of NVIDIA?" markets.
 
 Reads a case: /input/<id>.in — every trading market's Yes price at every
@@ -112,7 +113,7 @@ def forecast_market(prices):
     for h in range(1, HORIZON + 1):
         # dispersion grows like sqrt(h) but damped: prices don't random-walk forever
         t = h / 60.0
-        sig = spread * math.sqrt(t) * (1.0 + 0.5 * math.sqrt(t))
+        sig = spread * math.sqrt(t) * (1.0 + 0.4 * math.sqrt(t))
         # edge effects: near 0 or 1 the price tends to stay
         near_edge = 0.0
         if last < 0.03 or last > 0.97:
