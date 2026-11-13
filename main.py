@@ -128,26 +128,26 @@ def forecast_market(prices):
 
 
 def main():
-    in_dir, out_dir = "/input", "/output"
+    import os as _os
+    in_dir = _os.environ.get("MAKEFUN_INPUT_DIR", "/input")
+    out_dir = _os.environ.get("MAKEFUN_OUTPUT_DIR", "/output")
     if len(sys.argv) == 3:
         in_dir, out_dir = sys.argv[1], sys.argv[2]
     os.makedirs(out_dir, exist_ok=True)
+    forecasts = []
     for name in sorted(os.listdir(in_dir)):
         if not name.endswith(".in"):
             continue
-        case_id = name[:-3]
         with open(os.path.join(in_dir, name)) as f:
             case = json.load(f)
-        # case format: {"markets": [{"id"/"market": ..., "prices": [...]}]}
-        markets = case.get("markets") if isinstance(case, dict) else case
-        result = {}
-        for m in markets:
-            mid = m.get("id") or m.get("market") or m.get("slug")
-            prices = m.get("prices") or m.get("price_series") or []
-            result[mid] = forecast_market(prices)
+        for m in case.get("markets", []):
+            prices = m.get("prices") or []
+            q = forecast_market(prices)
+            forecasts.append({"id": m["id"], "q": [[round(v, 6) for v in row] for row in q]})
+        case_id = name[:-3]
         with open(os.path.join(out_dir, case_id + ".out"), "w") as f:
-            json.dump({"quantiles": list(QS), "horizon": HORIZON,
-                       "markets": {k: [list(row) for row in v] for k, v in result.items()}}, f)
+            json.dump({"forecasts": forecasts}, f, separators=(",", ":"))
+        forecasts = []
 
 
 if __name__ == "__main__":
